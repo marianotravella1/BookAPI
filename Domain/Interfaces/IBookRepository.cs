@@ -1,4 +1,4 @@
-﻿using Domain.Entities;
+using Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,8 +7,11 @@ using System.Threading.Tasks;
 
 namespace Domain.Interfaces
 {
-    public interface IBookRepository
+    public interface IBookRepository : IBaseRepository<Book>
     {
-        List<Book> GetAll();
+        Task<IEnumerable<Book>> GetBooksByAuthorAsync(int authorId);
+        Task<IEnumerable<Book>> GetBooksByRatingAsync(int minRating);
+        Task<IEnumerable<Book>> SearchBooksByTitleAsync(string title);
+        Task<Book?> GetBookWithAuthorsAsync(int bookId);
     }
 }
