@@ -1,7 +1,10 @@
 using Application.Service.Interfaces;
+using Application.Models.DTOs;
 using Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace BookAPI.Controllers
 {
@@ -17,7 +20,7 @@ namespace BookAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllBooks()
+        public async Task<ActionResult<IEnumerable<BookResponseDto>>> GetAllBooks()
         {
             try
             {
@@ -31,14 +34,15 @@ namespace BookAPI.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetBookById(int id)
+        public async Task<ActionResult<BookResponseDto>> GetBookById(int id)
         {
             try
             {
                 var book = await _bookService.GetBookByIdAsync(id);
                 if (book == null)
+                {
                     return NotFound($"Book with ID {id} not found.");
-                
+                }
                 return Ok(book);
             }
             catch (Exception ex)
@@ -48,7 +52,7 @@ namespace BookAPI.Controllers
         }
 
         [HttpGet("author/{authorId}")]
-        public async Task<IActionResult> GetBooksByAuthor(int authorId)
+        public async Task<ActionResult<IEnumerable<BookResponseDto>>> GetBooksByAuthor(int authorId)
         {
             try
             {
@@ -62,7 +66,7 @@ namespace BookAPI.Controllers
         }
 
         [HttpGet("rating/{rating}")]
-        public async Task<IActionResult> GetBooksByRating(int rating)
+        public async Task<ActionResult<IEnumerable<BookResponseDto>>> GetBooksByRating(decimal rating)
         {
             try
             {
@@ -76,7 +80,7 @@ namespace BookAPI.Controllers
         }
 
         [HttpGet("search/{title}")]
-        public async Task<IActionResult> SearchBooksByTitle(string title)
+        public async Task<ActionResult<IEnumerable<BookResponseDto>>> SearchBooksByTitle(string title)
         {
             try
             {
@@ -89,15 +93,30 @@ namespace BookAPI.Controllers
             }
         }
 
-        [HttpGet("{id}/with-authors")]
-        public async Task<IActionResult> GetBookWithAuthors(int id)
+        [HttpGet("search")]
+        public async Task<ActionResult<IEnumerable<BookResponseDto>>> SearchBooks([FromQuery] BookSearchDto searchDto)
+        {
+            try
+            {
+                var books = await _bookService.SearchBooksAsync(searchDto);
+                return Ok(books);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("{id}/authors")]
+        public async Task<ActionResult<BookResponseDto>> GetBookWithAuthors(int id)
         {
             try
             {
                 var book = await _bookService.GetBookWithAuthorsAsync(id);
                 if (book == null)
+                {
                     return NotFound($"Book with ID {id} not found.");
-                
+                }
                 return Ok(book);
             }
             catch (Exception ex)
@@ -107,14 +126,16 @@ namespace BookAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateBook([FromBody] Book book)
+        public async Task<ActionResult<BookResponseDto>> CreateBook([FromBody] CreateBookDto createBookDto)
         {
             try
             {
                 if (!ModelState.IsValid)
+                {
                     return BadRequest(ModelState);
+                }
 
-                var createdBook = await _bookService.CreateBookAsync(book);
+                var createdBook = await _bookService.CreateBookAsync(createBookDto);
                 return CreatedAtAction(nameof(GetBookById), new { id = createdBook.Id }, createdBook);
             }
             catch (ArgumentException ex)
@@ -128,17 +149,17 @@ namespace BookAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateBook(int id, [FromBody] Book book)
+        public async Task<ActionResult<BookResponseDto>> UpdateBook(int id, [FromBody] UpdateBookDto updateBookDto)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                if (id != book.Id)
-                    return BadRequest("ID mismatch between route and body.");
+                var updatedBook = await _bookService.UpdateBookAsync(id, updateBookDto);
+                if (updatedBook == null)
+                    return NotFound($"Book with ID {id} not found.");
 
-                var updatedBook = await _bookService.UpdateBookAsync(book);
                 return Ok(updatedBook);
             }
             catch (ArgumentException ex)

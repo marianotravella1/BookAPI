@@ -1,4 +1,5 @@
 using Application.Service.Interfaces;
+using Application.Models.DTOs;
 using Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -118,14 +119,14 @@ namespace BookAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateUser([FromBody] User user)
+        public async Task<IActionResult> CreateUser([FromBody] CreateUserDto createUserDto)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                var createdUser = await _userService.CreateUserAsync(user);
+                var createdUser = await _userService.CreateUserAsync(createUserDto);
                 return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Id }, createdUser);
             }
             catch (ArgumentException ex)
@@ -139,17 +140,14 @@ namespace BookAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(int id, [FromBody] User user)
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserDto updateUserDto)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                if (id != user.Id)
-                    return BadRequest("ID mismatch between route and body.");
-
-                var updatedUser = await _userService.UpdateUserAsync(user);
+                var updatedUser = await _userService.UpdateUserAsync(id, updateUserDto);
                 return Ok(updatedUser);
             }
             catch (ArgumentException ex)

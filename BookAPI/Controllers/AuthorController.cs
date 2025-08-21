@@ -1,4 +1,5 @@
 using Application.Service.Interfaces;
+using Application.Models.DTOs;
 using Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +18,7 @@ namespace BookAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllAuthors()
+        public async Task<ActionResult<IEnumerable<AuthorDetailResponseDto>>> GetAllAuthors()
         {
             try
             {
@@ -31,7 +32,7 @@ namespace BookAPI.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetAuthorById(int id)
+        public async Task<ActionResult<AuthorDetailResponseDto>> GetAuthorById(int id)
         {
             try
             {
@@ -48,7 +49,7 @@ namespace BookAPI.Controllers
         }
 
         [HttpGet("book/{bookId}")]
-        public async Task<IActionResult> GetAuthorsByBook(int bookId)
+        public async Task<ActionResult<IEnumerable<AuthorDetailResponseDto>>> GetAuthorsByBook(int bookId)
         {
             try
             {
@@ -62,7 +63,7 @@ namespace BookAPI.Controllers
         }
 
         [HttpGet("{id}/with-books")]
-        public async Task<IActionResult> GetAuthorWithBooks(int id)
+        public async Task<ActionResult<AuthorDetailResponseDto>> GetAuthorWithBooks(int id)
         {
             try
             {
@@ -79,7 +80,7 @@ namespace BookAPI.Controllers
         }
 
         [HttpGet("search/{name}")]
-        public async Task<IActionResult> SearchAuthorsByName(string name)
+        public async Task<ActionResult<IEnumerable<AuthorDetailResponseDto>>> SearchAuthorsByName(string name)
         {
             try
             {
@@ -93,14 +94,14 @@ namespace BookAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateAuthor([FromBody] Author author)
+        public async Task<ActionResult<AuthorDetailResponseDto>> CreateAuthor([FromBody] CreateAuthorDto createAuthorDto)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                var createdAuthor = await _authorService.CreateAuthorAsync(author);
+                var createdAuthor = await _authorService.CreateAuthorAsync(createAuthorDto);
                 return CreatedAtAction(nameof(GetAuthorById), new { id = createdAuthor.Id }, createdAuthor);
             }
             catch (ArgumentException ex)
@@ -114,17 +115,14 @@ namespace BookAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateAuthor(int id, [FromBody] Author author)
+        public async Task<ActionResult<AuthorDetailResponseDto>> UpdateAuthor(int id, [FromBody] UpdateAuthorDto updateAuthorDto)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                if (id != author.Id)
-                    return BadRequest("ID mismatch between route and body.");
-
-                var updatedAuthor = await _authorService.UpdateAuthorAsync(author);
+                var updatedAuthor = await _authorService.UpdateAuthorAsync(id, updateAuthorDto);
                 return Ok(updatedAuthor);
             }
             catch (ArgumentException ex)
