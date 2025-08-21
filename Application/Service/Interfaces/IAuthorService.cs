@@ -1,4 +1,4 @@
-using Application.Models.Requests;
+using Application.Models.DTOs;
 using Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -10,14 +10,19 @@ namespace Application.Service.Interfaces
 {
     public interface IAuthorService
     {
-        Task<Author?> GetAuthorByIdAsync(int id);
-        Task<IEnumerable<Author>> GetAllAuthorsAsync();
-        Task<Author> CreateAuthorAsync(Author author);
-        Task<Author> UpdateAuthorAsync(Author author);
+        // Métodos que retornan DTOs
+        Task<AuthorDetailResponseDto?> GetAuthorByIdAsync(int id);
+        Task<IEnumerable<AuthorDetailResponseDto>> GetAllAuthorsAsync();
+        Task<AuthorDetailResponseDto?> GetAuthorWithBooksAsync(int authorId);
+        Task<IEnumerable<AuthorDetailResponseDto>> GetAuthorsByBookAsync(int bookId);
+        Task<IEnumerable<AuthorDetailResponseDto>> SearchAuthorsByNameAsync(string name);
+        
+        // Métodos CRUD con DTOs
+        Task<AuthorDetailResponseDto> CreateAuthorAsync(CreateAuthorDto createAuthorDto);
+        Task<AuthorDetailResponseDto> UpdateAuthorAsync(int id, UpdateAuthorDto updateAuthorDto);
         Task DeleteAuthorAsync(int id);
-        Task<IEnumerable<Author>> GetAuthorsByBookAsync(int bookId);
-        Task<Author?> GetAuthorWithBooksAsync(int authorId);
-        Task<IEnumerable<Author>> SearchAuthorsByNameAsync(string name);
+        
+        // Métodos de utilidad
         Task<bool> AuthorExistsAsync(int id);
     }
 }
