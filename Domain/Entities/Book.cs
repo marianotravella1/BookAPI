@@ -27,6 +27,11 @@ namespace Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         
+        // Foreign key for Category
+        public int? CategoryId { get; set; }
+        
+        // Navigation properties
+        public virtual Category? Category { get; set; }
         public List<Author> Authors { get; set; } = new List<Author>();
     }
 }

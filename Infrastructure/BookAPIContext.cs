@@ -8,6 +8,7 @@ namespace Infrastructure
         public DbSet<Book> Books { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Author> Authors { get; set; }
+        public DbSet<Category> Categories { get; set; }
         
         public BookAPIContext(DbContextOptions<BookAPIContext> options) : base(options) 
         { 
@@ -22,6 +23,13 @@ namespace Infrastructure
                 .HasMany(b => b.Authors)
                 .WithMany(a => a.Books)
                 .UsingEntity("BookAuthor");
+
+            // Configure Book-Category one-to-many relationship
+            modelBuilder.Entity<Book>()
+                .HasOne(b => b.Category)
+                .WithMany(c => c.Books)
+                .HasForeignKey(b => b.CategoryId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // Configure Book entity
             modelBuilder.Entity<Book>(entity =>
@@ -56,6 +64,8 @@ namespace Infrastructure
                     .HasDefaultValue(true);
                 entity.Property(b => b.CreatedAt)
                     .HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(b => b.CategoryId)
+                    .IsRequired(false);
             });
 
             // Configure Author entity
@@ -73,6 +83,21 @@ namespace Infrastructure
                     .HasMaxLength(500);
                 entity.Property(a => a.CreatedAt)
                     .HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // Configure Category entity
+            modelBuilder.Entity<Category>(entity =>
+            {
+                entity.HasKey(c => c.Id);
+                entity.Property(c => c.Name)
+                    .IsRequired()
+                    .HasMaxLength(100);
+                entity.Property(c => c.Description)
+                    .HasMaxLength(500);
+                entity.Property(c => c.CreatedAt)
+                    .HasDefaultValueSql("GETUTCDATE()");
+                entity.HasIndex(c => c.Name)
+                    .IsUnique();
             });
 
             // Configure User entity
