@@ -1,4 +1,5 @@
-using Application.Models.Requests;
+using Application.Models.DTOs;
+using Application.Mappers;
 using Application.Service.Interfaces;
 using Domain.Entities;
 using Domain.Interfaces;
@@ -19,34 +20,34 @@ namespace Application.Service.Implementations
             _authorRepository = authorRepository;
         }
 
-        public async Task<Author?> GetAuthorByIdAsync(int id)
+        public async Task<AuthorDetailResponseDto?> GetAuthorByIdAsync(int id)
         {
-            return await _authorRepository.GetByIdAsync(id);
+            var author = await _authorRepository.GetByIdAsync(id);
+            return author != null ? AuthorMapper.ToDetailResponseDto(author) : null;
         }
 
-        public async Task<IEnumerable<Author>> GetAllAuthorsAsync()
+        public async Task<IEnumerable<AuthorDetailResponseDto>> GetAllAuthorsAsync()
         {
-            return await _authorRepository.GetAllAsync();
+            var authors = await _authorRepository.GetAllAsync();
+            return AuthorMapper.ToDetailResponseDtos(authors);
         }
 
-        public async Task<Author> CreateAuthorAsync(Author author)
+        public async Task<AuthorDetailResponseDto> CreateAuthorAsync(CreateAuthorDto createAuthorDto)
         {
-            if (string.IsNullOrWhiteSpace(author.Name))
-                throw new ArgumentException("Author name is required.");
-
-            return await _authorRepository.AddAsync(author);
+            var author = AuthorMapper.ToEntity(createAuthorDto);
+            var createdAuthor = await _authorRepository.AddAsync(author);
+            return AuthorMapper.ToDetailResponseDto(createdAuthor);
         }
 
-        public async Task<Author> UpdateAuthorAsync(Author author)
+        public async Task<AuthorDetailResponseDto> UpdateAuthorAsync(int id, UpdateAuthorDto updateAuthorDto)
         {
-            var existingAuthor = await _authorRepository.GetByIdAsync(author.Id);
+            var existingAuthor = await _authorRepository.GetByIdAsync(id);
             if (existingAuthor == null)
                 throw new ArgumentException("Author not found.");
 
-            if (string.IsNullOrWhiteSpace(author.Name))
-                throw new ArgumentException("Author name is required.");
-
-            return await _authorRepository.UpdateAsync(author);
+            AuthorMapper.UpdateEntity(existingAuthor, updateAuthorDto);
+            var updatedAuthor = await _authorRepository.UpdateAsync(existingAuthor);
+            return AuthorMapper.ToDetailResponseDto(updatedAuthor);
         }
 
         public async Task DeleteAuthorAsync(int id)
@@ -58,22 +59,25 @@ namespace Application.Service.Implementations
             await _authorRepository.DeleteAsync(id);
         }
 
-        public async Task<IEnumerable<Author>> GetAuthorsByBookAsync(int bookId)
+        public async Task<IEnumerable<AuthorDetailResponseDto>> GetAuthorsByBookAsync(int bookId)
         {
-            return await _authorRepository.GetAuthorsByBookAsync(bookId);
+            var authors = await _authorRepository.GetAuthorsByBookAsync(bookId);
+            return AuthorMapper.ToDetailResponseDtos(authors);
         }
 
-        public async Task<Author?> GetAuthorWithBooksAsync(int authorId)
+        public async Task<AuthorDetailResponseDto?> GetAuthorWithBooksAsync(int authorId)
         {
-            return await _authorRepository.GetAuthorWithBooksAsync(authorId);
+            var author = await _authorRepository.GetAuthorWithBooksAsync(authorId);
+            return author != null ? AuthorMapper.ToDetailResponseDto(author) : null;
         }
 
-        public async Task<IEnumerable<Author>> SearchAuthorsByNameAsync(string name)
+        public async Task<IEnumerable<AuthorDetailResponseDto>> SearchAuthorsByNameAsync(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Search name cannot be empty.");
 
-            return await _authorRepository.SearchAuthorsByNameAsync(name);
+            var authors = await _authorRepository.SearchAuthorsByNameAsync(name);
+            return AuthorMapper.ToDetailResponseDtos(authors);
         }
 
         public async Task<bool> AuthorExistsAsync(int id)

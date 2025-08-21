@@ -1,3 +1,5 @@
+using Application.Models.DTOs;
+using Application.Mappers;
 using Application.Service.Interfaces;
 using Domain.Entities;
 using Domain.Interfaces;
@@ -18,56 +20,62 @@ namespace Application.Service.Implementations
             _userRepository = userRepository;
         }
 
-        public async Task<User?> GetUserByIdAsync(int id)
+        public async Task<UserResponseDto?> GetUserByIdAsync(int id)
         {
-            return await _userRepository.GetByIdAsync(id);
+            var user = await _userRepository.GetByIdAsync(id);
+            return user != null ? UserMapper.ToResponseDto(user) : null;
         }
 
-        public async Task<IEnumerable<User>> GetAllUsersAsync()
+        public async Task<IEnumerable<UserResponseDto>> GetAllUsersAsync()
         {
-            return await _userRepository.GetAllAsync();
+            var users = await _userRepository.GetAllAsync();
+            return UserMapper.ToResponseDtos(users);
         }
 
-        public async Task<User> CreateUserAsync(User user)
+        public async Task<UserResponseDto> CreateUserAsync(CreateUserDto createUserDto)
         {
-            if (string.IsNullOrWhiteSpace(user.Username))
+            if (string.IsNullOrWhiteSpace(createUserDto.Username))
                 throw new ArgumentException("Username is required.");
 
-            if (string.IsNullOrWhiteSpace(user.Email))
+            if (string.IsNullOrWhiteSpace(createUserDto.Email))
                 throw new ArgumentException("Email is required.");
 
-            if (!await _userRepository.IsUsernameAvailableAsync(user.Username))
+            if (!await _userRepository.IsUsernameAvailableAsync(createUserDto.Username))
                 throw new ArgumentException("Username is already taken.");
 
-            if (!await _userRepository.IsEmailAvailableAsync(user.Email))
+            if (!await _userRepository.IsEmailAvailableAsync(createUserDto.Email))
                 throw new ArgumentException("Email is already registered.");
 
-            return await _userRepository.AddAsync(user);
+            var user = UserMapper.ToEntity(createUserDto);
+            var createdUser = await _userRepository.AddAsync(user);
+            return UserMapper.ToResponseDto(createdUser);
         }
 
-        public async Task<User> UpdateUserAsync(User user)
+        public async Task<UserResponseDto> UpdateUserAsync(int id, UpdateUserDto updateUserDto)
         {
-            var existingUser = await _userRepository.GetByIdAsync(user.Id);
+            var existingUser = await _userRepository.GetByIdAsync(id);
             if (existingUser == null)
                 throw new ArgumentException("User not found.");
 
-            if (string.IsNullOrWhiteSpace(user.Username))
-                throw new ArgumentException("Username is required.");
-
-            if (string.IsNullOrWhiteSpace(user.Email))
-                throw new ArgumentException("Email is required.");
-
             // Check if username is taken by another user
-            var userWithSameUsername = await _userRepository.GetUserByUsernameAsync(user.Username);
-            if (userWithSameUsername != null && userWithSameUsername.Id != user.Id)
-                throw new ArgumentException("Username is already taken.");
+            if (!string.IsNullOrWhiteSpace(updateUserDto.Username))
+            {
+                var userWithSameUsername = await _userRepository.GetUserByUsernameAsync(updateUserDto.Username);
+                if (userWithSameUsername != null && userWithSameUsername.Id != id)
+                    throw new ArgumentException("Username is already taken.");
+            }
 
             // Check if email is taken by another user
-            var userWithSameEmail = await _userRepository.GetUserByEmailAsync(user.Email);
-            if (userWithSameEmail != null && userWithSameEmail.Id != user.Id)
-                throw new ArgumentException("Email is already registered.");
+            if (!string.IsNullOrWhiteSpace(updateUserDto.Email))
+            {
+                var userWithSameEmail = await _userRepository.GetUserByEmailAsync(updateUserDto.Email);
+                if (userWithSameEmail != null && userWithSameEmail.Id != id)
+                    throw new ArgumentException("Email is already registered.");
+            }
 
-            return await _userRepository.UpdateAsync(user);
+            UserMapper.UpdateEntity(existingUser, updateUserDto);
+            var updatedUser = await _userRepository.UpdateAsync(existingUser);
+            return UserMapper.ToResponseDto(updatedUser);
         }
 
         public async Task DeleteUserAsync(int id)
@@ -79,20 +87,22 @@ namespace Application.Service.Implementations
             await _userRepository.DeleteAsync(id);
         }
 
-        public async Task<User?> GetUserByUsernameAsync(string username)
+        public async Task<UserResponseDto?> GetUserByUsernameAsync(string username)
         {
             if (string.IsNullOrWhiteSpace(username))
                 throw new ArgumentException("Username cannot be empty.");
 
-            return await _userRepository.GetUserByUsernameAsync(username);
+            var user = await _userRepository.GetUserByUsernameAsync(username);
+            return user != null ? UserMapper.ToResponseDto(user) : null;
         }
 
-        public async Task<User?> GetUserByEmailAsync(string email)
+        public async Task<UserResponseDto?> GetUserByEmailAsync(string email)
         {
             if (string.IsNullOrWhiteSpace(email))
                 throw new ArgumentException("Email cannot be empty.");
 
-            return await _userRepository.GetUserByEmailAsync(email);
+            var user = await _userRepository.GetUserByEmailAsync(email);
+            return user != null ? UserMapper.ToResponseDto(user) : null;
         }
 
         public async Task<bool> IsUsernameAvailableAsync(string username)
